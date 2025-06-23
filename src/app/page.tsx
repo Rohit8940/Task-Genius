@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Trash2, Loader2, Edit, Save, X, Filter } from 'lucide-react'
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-
 import {
   Select,
   SelectContent,
@@ -31,7 +30,7 @@ interface Task {
 
 export default function TaskPage() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [previewTasks, setPreviewTasks] = useState<string[]>([])
+  const [previewTasks, setPreviewTasks] = useState<{title: string, isSaving?: boolean}[]>([])
   const [error, setError] = useState<string | null>(null)
   const [topic, setTopic] = useState('')
   const [newTask, setNewTask] = useState('')
@@ -50,7 +49,6 @@ export default function TaskPage() {
   const [isAdding, setIsAdding] = useState(false)
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null)
   const [isEditingId, setIsEditingId] = useState<number | null>(null)
-  const [isSavingGenerated, setIsSavingGenerated] = useState(false)
 
   const { user, isLoaded } = useUser()
   const router = useRouter()
@@ -58,7 +56,7 @@ export default function TaskPage() {
   useEffect(() => {
     if (!isLoaded) return
     if (!user) {
-      router.push('/sign-in')
+      router.push(`/sign-in`)
       return
     }
 
@@ -69,8 +67,13 @@ export default function TaskPage() {
         if (!res.ok) throw new Error('Failed to fetch tasks')
         const data = await res.json()
         setTasks(data)
+        // Clear error if successful (even if empty)
+        setError(null)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
+        // Only show error if it's not the default empty state
+        if (err instanceof Error && !err.message.includes('Failed to fetch')) {
+          setError(err.message)
+        }
       } finally {
         setIsFetching(false)
       }
@@ -98,7 +101,7 @@ export default function TaskPage() {
       const { tasks: generatedTasks } = await response.json()
       if (!Array.isArray(generatedTasks)) throw new Error('Invalid response format')
 
-      setPreviewTasks(generatedTasks)
+      setPreviewTasks(generatedTasks.map(title => ({title})))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error generating tasks')
     } finally {
@@ -106,10 +109,14 @@ export default function TaskPage() {
     }
   }
 
-  const handleSaveTask = async (title: string) => {
+  const handleSaveTask = async (title: string, index: number) => {
     if (!user) return
     try {
-      setIsSavingGenerated(true)
+      // Set loading state for this specific task
+      setPreviewTasks(prev => prev.map((task, i) => 
+        i === index ? {...task, isSaving: true} : task
+      ))
+      
       const response = await fetch(`${baseUrl}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,11 +132,13 @@ export default function TaskPage() {
       if (!response.ok) throw new Error('Failed to save task')
       const data = await response.json()
       setTasks(prev => [...prev, data])
-      setPreviewTasks(prev => prev.filter(t => t !== title))
+      setPreviewTasks(prev => prev.filter((_, i) => i !== index))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error saving task')
-    } finally {
-      setIsSavingGenerated(false)
+      // Reset loading state on error
+      setPreviewTasks(prev => prev.map((task, i) => 
+        i === index ? {...task, isSaving: false} : task
+      ))
     }
   }
 
@@ -283,10 +292,9 @@ export default function TaskPage() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle className="text-2xl font-bold">Task Manager</CardTitle>
-           <SignOutButton redirectUrl="https://golden-colt-97.accounts.dev/sign-in">
-  <Button variant="destructive">Sign Out</Button>
-</SignOutButton>
-
+            <SignOutButton redirectUrl="https://golden-colt-97.accounts.dev/sign-in">
+              <Button variant="destructive">Sign Out</Button>
+            </SignOutButton>
           </div>
         </CardHeader>
       </Card>
@@ -312,70 +320,64 @@ export default function TaskPage() {
             </Button>
           </div>
           <div className="flex gap-2">
-  {/* Task Title Input */}
-  <Input
-    value={newTask}
-    onChange={(e) => setNewTask(e.target.value)}
-    placeholder="New task title"
-    disabled={isAdding}
-    onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-    className="min-w-[200px]" // Matches Generate Task input width
-  />
-
-  {/* Category Select / Input */}
-  <div className="flex gap-2 items-center">
-    {showCategoryInput ? (
-      <Input
-        value={newCategory}
-        onChange={(e) => setNewCategory(e.target.value)}
-        placeholder="Enter category"
-        className="w-[180px]"
-        autoFocus
-      />
-    ) : (
-      <Select
-        value={newCategory || "no-category"}
-        onValueChange={(value) => setNewCategory(value === "no-category" ? "" : value)}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue>
-            {newCategory ? newCategory : "Select category"}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="no-category">No category</SelectItem>
-          {categories.map((category) => (
-            <SelectItem key={category} value={category}>
-              {category}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    )}
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={() => {
-        setShowCategoryInput(!showCategoryInput)
-        setNewCategory('')
-      }}
-      title={showCategoryInput ? "Use dropdown" : "Use custom input"}
-      disabled={isAdding}
-    >
-      <Filter className="h-4 w-4" />
-    </Button>
-  </div>
-
-  {/* Add Task Button */}
-  <Button
-    onClick={handleAddTask}
-    disabled={!newTask.trim() || isAdding}
-    className="min-w-[200px]" // Matches Generate button width
-  >
-    {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : '➕ Add Task'}
-  </Button>
-</div>
-
+            <Input
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder="New task title"
+              disabled={isAdding}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+              className="min-w-[200px]"
+            />
+            <div className="flex gap-2 items-center">
+              {showCategoryInput ? (
+                <Input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Enter category"
+                  className="w-[180px]"
+                  autoFocus
+                />
+              ) : (
+                <Select
+                  value={newCategory || "no-category"}
+                  onValueChange={(value) => setNewCategory(value === "no-category" ? "" : value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue>
+                      {newCategory ? newCategory : "Select category"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no-category">No category</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  setShowCategoryInput(!showCategoryInput)
+                  setNewCategory('')
+                }}
+                title={showCategoryInput ? "Use dropdown" : "Use custom input"}
+                disabled={isAdding}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={handleAddTask}
+              disabled={!newTask.trim() || isAdding}
+              className="min-w-[200px]"
+            >
+              {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : '➕ Add Task'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -387,13 +389,17 @@ export default function TaskPage() {
           <CardContent className="space-y-2">
             {previewTasks.map((task, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <p className="text-sm">{task}</p>
+                <p className="text-sm">{task.title}</p>
                 <Button 
                   size="sm" 
-                  onClick={() => handleSaveTask(task)} 
-                  disabled={isSavingGenerated}
+                  onClick={() => handleSaveTask(task.title, index)} 
+                  disabled={task.isSaving}
                 >
-                  {isSavingGenerated ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                  {task.isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Save'
+                  )}
                 </Button>
               </div>
             ))}
@@ -444,7 +450,7 @@ export default function TaskPage() {
               <Progress value={progress} className="h-2" />
             </div>
           )}
-          {isFetching && tasks.length === 0 ? (
+          {isFetching ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
@@ -488,7 +494,6 @@ export default function TaskPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                        
                       </div>
                       <div className="flex gap-2 mt-2">
                         <Button 

@@ -11,7 +11,7 @@ export default clerkMiddleware((auth, req) => {
   if (!isPublicRoute(req)) {
     return auth().then(({ userId }) => {
       if (!userId) {
-        return Response.redirect(new URL('https://golden-colt-97.accounts.dev/sign-in', req.url))
+        return Response.redirect(new URL('/sign-in', req.url))
       }
     })
   }

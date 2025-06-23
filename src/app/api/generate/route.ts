@@ -1,3 +1,20 @@
+/**
+ * @swagger
+ * /api/generate:
+ *   get:
+ *     summary: Get all tasks for a user
+ *     parameters:
+ *       - in: query
+ *         name: clerkUserId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Clerk user ID
+ *     responses:
+ *       200:
+ *         description: A list of tasks
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 
