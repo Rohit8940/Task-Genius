@@ -1,20 +1,46 @@
-
 /**
  * @swagger
  * /api/gemini:
- *   get:
- *     summary: Get all tasks for a user
- *     parameters:
- *       - in: query
- *         name: clerkUserId
- *         schema:
- *           type: string
- *         required: true
- *         description: Clerk user ID
+ *   post:
+ *     summary: Generate tasks based on a topic using Gemini API
+ *     tags:
+ *       - Gemini
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               topic:
+ *                 type: string
+ *                 example: Learn Python
+ *                 description: The topic to generate tasks for
  *     responses:
  *       200:
- *         description: A list of tasks
+ *         description: A list of generated tasks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tasks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       title:
+ *                         type: string
+ *                         example: Install Python and set up your environment
+ *                       category:
+ *                         type: string
+ *                         example: setup
+ *       400:
+ *         description: Missing topic in request body
+ *       500:
+ *         description: Failed to generate or parse tasks
  */
+
 
 
 import { NextRequest, NextResponse } from 'next/server'
