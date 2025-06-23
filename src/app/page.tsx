@@ -10,6 +10,9 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Trash2, Loader2, Edit, Save, X, Filter } from 'lucide-react'
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+
 import {
   Select,
   SelectContent,
@@ -62,7 +65,7 @@ export default function TaskPage() {
     const fetchTasks = async () => {
       try {
         setIsFetching(true)
-        const res = await fetch(`/api/tasks?clerkUserId=${user.id}`)
+        const res = await fetch(`${baseUrl}/api/tasks?clerkUserId=${user.id}`)
         if (!res.ok) throw new Error('Failed to fetch tasks')
         const data = await res.json()
         setTasks(data)
@@ -85,7 +88,7 @@ export default function TaskPage() {
     if (!topic.trim() || !user) return
     try {
       setIsGenerating(true)
-      const response = await fetch('/api/generate', {
+      const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic }),
@@ -107,7 +110,7 @@ export default function TaskPage() {
     if (!user) return
     try {
       setIsSavingGenerated(true)
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(`${baseUrl}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,7 +137,7 @@ export default function TaskPage() {
     if (!newTask.trim() || !user) return
     try {
       setIsAdding(true)
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(`${baseUrl}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +171,7 @@ export default function TaskPage() {
     if (!id) return
     try {
       setIsDeletingId(id)
-      const res = await fetch(`/api/tasks?id=${id}`, {
+      const res = await fetch(`${baseUrl}/api/tasks?id=${id}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error('Failed to delete task')
@@ -186,7 +189,7 @@ export default function TaskPage() {
       const taskToUpdate = tasks.find(task => task.id === id)
       if (!taskToUpdate) return
 
-      const res = await fetch(`/api/tasks?id=${id}`, {
+      const res = await fetch(`${baseUrl}/api/tasks?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: !taskToUpdate.completed }),
@@ -207,7 +210,7 @@ export default function TaskPage() {
     if (!id) return
     try {
       setIsEditingId(id)
-      const res = await fetch(`/api/tasks?id=${id}`, {
+      const res = await fetch(`${baseUrl}/api/tasks?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
