@@ -1,29 +1,14 @@
-/**
- * @swagger
- * /api/generate:
- *   get:
- *     summary: Get all tasks for a user
- *     parameters:
- *       - in: query
- *         name: clerkUserId
- *         schema:
- *           type: string
- *         required: true
- *         description: Clerk user ID
- *     responses:
- *       200:
- *         description: A list of tasks
- */
+
 
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_API_KEY!, // store in env
+  apiKey: process.env.GOOGLE_API_KEY!, 
 })
 
-// Handle CORS preflight
+// Handle CORS 
 export async function OPTIONS() {
   return new Response(null, {
     status: 204,

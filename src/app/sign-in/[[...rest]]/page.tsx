@@ -7,7 +7,6 @@ export default function SignInPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect to your external sign-in page
     window.location.href = 'https://golden-colt-97.accounts.dev/sign-in'
   }, [router])
 

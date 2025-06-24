@@ -12,6 +12,6 @@ export const tasks = pgTable('tasks', {
   title: text('title').notNull(),
   completed: boolean('completed').default(false),
   userId: integer('user_id').references(() => users.id).notNull(),
-  category: text('category'), // ✅ Add this line
+  category: text('category'), 
   createdAt: timestamp('created_at').defaultNow(),
 })

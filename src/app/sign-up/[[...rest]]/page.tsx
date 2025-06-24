@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 
 export default function SignUpPage() {
   useEffect(() => {
-    // Redirect to your external sign-up page
     window.location.href = 'https://golden-colt-97.accounts.dev/sign-up'
   }, [])
 
